@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+
+from Evaluation.naiveHandEvaluation import evalHand
 from Range.Range import Range
 import copy
 import random
@@ -22,7 +24,7 @@ class Player(ABC):
         self.hero = False
 
     def compute_rounds(self, all_opponents):
-        rounds = 450 * all_opponents.remaining_length()
+        rounds = 500 * all_opponents.remaining_length()
 
         if self.last_odds != "preflop":
             rounds *= 0.5
@@ -70,7 +72,6 @@ class Player(ABC):
 
         for _ in range(rounds):
             current_community = copy.deepcopy(community)
-            #print("here2")
 
             # Fill community with random cards. We do not remove these, may be an issue (improves runtime tho)
             while len(current_community) < 5:
@@ -91,8 +92,6 @@ class Player(ABC):
                         return
             # All opponents have a hand now, from their range. Find winner
             winners = random_hands_opponents.determine_winner(current_community)
-            #print("here3")
-            #gc.collect()
 
             # assign win
             if len(winners) == 1 and winners[0].name == self.name:
@@ -103,9 +102,8 @@ class Player(ABC):
                     if winner.name == self.name:
                         win_percentage += 1 / len(winners)
                         break
-        #print("here4")
 
-        self.win_odds = win_percentage / rounds
+        self.win_odds = (win_percentage / rounds) + evalHand(self.hand, street)
         if pre_computed_Q is not None:
             pre_computed_Q.put((pre_computed_package(self.hand, self.name, all_opponents,
                                                      "add", ID, odds=self.win_odds)))
@@ -121,7 +119,7 @@ class Player(ABC):
         # Select all previous actions:
         for name, action in node.identifier.preflop[0:-1]:
 
-            if action in ["bet1", "bet2", "bet3"]:
+            if action in ["b1", "b2", "b3"]:
                 if _threeBet:
                     _fourBet = True
                 if _open:
@@ -132,10 +130,10 @@ class Player(ABC):
                 _open = True
                 _multiWay = False
 
-            elif action == "call":
+            elif action == "ca":
                 _multiWay = True
 
-            elif action == "allIn":
+            elif action == "AL":
                 _shove = True
                 _multiWay = False
 
@@ -148,11 +146,11 @@ class Player(ABC):
         # Special rules for the BB
         if self.name == "BB":
             # If the last action is check, we know that 1+ players limped.
-            if action == "check":
+            if action == "ch":
                 self.range_num = [0, 1]
                 return
 
-            elif action == "call":
+            elif action == "ca":
                 if _shove:
                     self.range_num = [5]
                 elif _fourBet:
@@ -173,7 +171,7 @@ class Player(ABC):
                 return
 
         # All players:
-        if action in ["bet1", "bet2", "bet3"]:
+        if action in ["b1", "b2", "b3"]:
             if _fourBet:
                 self.range_num = [5]
             elif _threeBet:
@@ -187,16 +185,16 @@ class Player(ABC):
                     self.range_num = [1, 2, 3, 4, 5]
 
 
-        elif action == "allIn":
+        elif action == "AL":
             if not _fourBet and not _multiWay:
                 self.range_num = [4, 5]
             else:
                 self.range_num = [5]
 
-        elif action == "fold":
+        elif action == "fo":
             self.range_num = [0]
 
-        elif action == "call":
+        elif action == "ca":
             if _shove:
                 self.range_num = [5]
             elif _fourBet:

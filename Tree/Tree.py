@@ -1,16 +1,11 @@
-from Misc.Logger import loggerNonStatic
 from Tree.node import Node
 from Tree.Identifier import Identifier
-from Tree.data import Data
+from Tree.data2 import Data
 import pickle
 import gc
 import os
-from Controllers.Game_controller import game_controller
-import time
-import traceback
-import sys
+import shutil
 
-from subtree_trainer.Simulator import sim
 
 
 class Tree:
@@ -19,6 +14,8 @@ class Tree:
         self.nodes = {}
         self.root = root
         self.rounds_trained = 0
+        self.child_map = {}
+
 
         # For multi-processing. Is reset for each new train session.
 
@@ -30,22 +27,6 @@ class Tree:
                 ID.create_name(is_root=True)
                 self.add_node(ID, data=Data(), is_root=True)
 
-    def all_nodes(self):
-        return self.nodes.values()
-
-    def all_leaves(self):
-        nodes = self.all_nodes()
-        leaves = []
-        for node in nodes:
-            if node.is_leaf():
-                leaves.append(node)
-        return leaves
-
-    def get_node(self, name):
-
-        for node in self.nodes.values():
-            if node.identifier.name == name:
-                return node
 
     def add_node(self, ID, data=None, is_root=False, parent=None):
         if is_root:
@@ -60,17 +41,23 @@ class Tree:
             else:
                 new_node = Node(ID, data, parent)
                 self.nodes[ID.name] = new_node
-                # self.get_node(parent.identifier.name).add_child(new_node)
                 self.nodes[parent.identifier.name].add_child(new_node)
+
+                if self.child_map.get(parent.identifier.name) is None:
+                    children = set()
+                else:
+                    children = self.child_map[parent.identifier.name]
+
+                children.add(new_node.identifier.name)
+                self.child_map[parent.identifier.name] = children
+
     def print(self):
 
         for item in self.nodes.values():
             print(item.__str__())
 
-    """ Ensures that the tree is maximal. """
-
+    """ Expand tree with new nodes if possible """
     def expand_tree(self, current_player, all_players, current_node, controller):
-        # Actions are: b1, b2, allIn, call, fold, check
 
         if current_node.is_leaf() and current_player.chips > 0:
 
@@ -78,7 +65,6 @@ class Tree:
             pot = all_players.pot_size()
             bet1 = True
             bet2 = True
-            bet3 = True
             call = False
             check = False
             allIn = True
@@ -95,8 +81,7 @@ class Tree:
                 bet1 = False
             if ((pot + current_bet) * 0.8 + current_bet) - current_player.bet > current_player.chips:
                 bet2 = False
-            if ((pot + current_bet) * 1 + current_bet) - current_player.bet > current_player.chips:
-                bet3 = False
+
 
             # Calls must also be available preflop, since blinds have been posted...
             if current_node.identifier.call_available(controller.new_street, controller.preflop,
@@ -116,9 +101,8 @@ class Tree:
             elif current_node.identifier.allIn_occured():
                 allIn = False
 
-            actions = [(fold, "fold"), (call, "call"), (check, "check"),
-                       (bet1, "bet1"), (bet2, "bet2"), (allIn, "allIn")]
-            # (bet3, "bet3")
+            actions = [(fold, "f"), (call, "ca"), (check, "ch"),
+                       (bet1, "b1"), (bet2, "b2"), (allIn, "AL")]
 
             for action, string in actions:
                 if action:
@@ -136,105 +120,95 @@ class Tree:
 
         controller.new_street = [False, ""]
 
-    def to_object(self, filename):
+
+    """Saves the tree in different files. Useful as pickle has high memory overhead (5x)"""
+    def to_object(self, path):
+        print("saving tree")
         gc.disable()
-        with open(filename, 'wb') as Tree_file:
-            pickle.dump(self, Tree_file, protocol=4)
-        gc.enable()
+        if path not in os.listdir():
+            os.makedirs(path)
+        else:
+            shutil.rmtree(path)
+            os.makedirs(path)
 
+        os.chdir(path)
+        if "etc" not in os.listdir():
+            os.makedirs("etc")
+        if "nodes" not in os.listdir():
+            os.makedirs("nodes")
 
-    """overwrites the current Tree with a Tree object located in a file"""
+        # Dump etc
+        os.chdir("etc")
+        pickle.dump(self.child_map, open("child_map", "wb"), protocol=4)
+        pickle.dump(self.rounds_trained, open("rounds_trained", "wb"), protocol=4)
 
-    def get_object(self, filename):
-        gc.disable()
-        with open(filename, 'rb') as Tree_file:
-            t = pickle.load(Tree_file)
-        self.nodes = t.nodes
-        self.root = t.root
-        self.rounds_trained = t.rounds_trained
-        gc.enable()
+        self.child_map = None
 
-
-def tree_service(tree_Q, channels, new_tree, path, is_bot=False):
-    try:
         os.chdir("..")
-        if is_bot:
-            os.chdir("..")
-        os.chdir("Simulator_main")
-        T = Tree(new_tree=new_tree, path=path)
+        os.chdir("nodes")
 
-        if is_bot:
-            tree_Q.put(1)
+        # Dump nodes, remember to cut children.
+        idx = 0
+        dump_list = [self.root]
+        for node in self.nodes.values():
+            if ((idx+1) % 50000) == 0:
 
-        logger = loggerNonStatic("master")
+                pickle.dump(dump_list, open("nodes" + str(idx), "wb"), protocol=4)
 
-        while True:
-            res = tree_Q.get()
+                dump_list = []
 
-            if res.request == "process":
-                current_node = T.nodes[res.current_node_name]
-                if not res.is_bot:
-                    T.expand_tree(res.current_player, res.all_players, current_node, res.controller)
-                channels[res.ID].put(current_node.local_node())
+            node.children = None
+            dump_list.append(node)
+            idx += 1
+        pickle.dump(dump_list, open("nodes" + str(idx), "wb"), protocol=4)
 
-            elif res.request == "root":
-                T.rounds_trained += 1
-                current_node = T.root
-                if not res.is_bot:
-                    T.expand_tree(res.current_player, res.all_players, current_node, res.controller)
-                channels[res.ID].put(T.root.local_node())
+        os.chdir("..")
+        os.chdir("..")
+        gc.enable()
 
-            elif res.request == "backprop":
-                nodes_for_update = []
-                for iden, odds, player, pi in res.selected_nodes:
-                    # Finds the correct node for update
-                    node_ = T.nodes[iden.name]
-                    nodes_for_update.append((node_, odds, player, pi))
+    """Gets the tree from different files - rebuilds it. Useful as pickle has high memory overhead (5x)"""
+    def get_object(self, path):
+        os.chdir(path)
+        os.chdir("etc")
+        gc.disable()
+        child_map = pickle.load(open("child_map", "rb"))
+        self.child_map = child_map
+        child_map = None
 
-                g_controller = game_controller()
-                g_controller.selected_nodes = nodes_for_update
-                logger.end_log(res.players, res.winner, res.community, res.pot)
-                logger.nodes_log(g_controller.selected_nodes)
+        rounds_trained = pickle.load(open("rounds_trained", "rb"))
+        self.rounds_trained = rounds_trained
+        rounds_trained = None
 
-                g_controller.back_prop(res.pot, res.winner)
+        os.chdir("..")
+        os.chdir("nodes")
 
-                logger.nodes_log(g_controller.selected_nodes, "After")
+        all_nodes = {}
+        for node_pack in os.listdir():
+            nodes_list = pickle.load(open(node_pack, "rb"))
+            nodes_dict = {}
+
+            for node in nodes_list:
+                node.children = set()
+                nodes_dict[node.identifier.name] = node
+
+            all_nodes = {**all_nodes, **nodes_dict}
+            nodes_list = None
+            nodes_dict = None
+
+        self.nodes = all_nodes
+        all_nodes = None
+
+        self.root = self.nodes["root"]
+
+        for node in self.nodes.values():
+            children_names = self.child_map.get(node.identifier.name)
+            # Leaves have no children..
+            if children_names is not None:
+                for c in children_names:
+                    node.children.add(self.nodes[c])
+
+        os.chdir("..")
+        os.chdir("..")
+        gc.enable()
 
 
-            elif res.request == "getSubtree":
-                if res.current_node_name[-2:] in ["F:", "T:", "R:"]:
-                    res.current_node_name = res.current_node_name[:-2]
-                sub_tree = T.nodes[res.current_node_name].subtree()
-                channels[res.ID].put(sub_tree)
-                print("done fetching subtree")
-
-
-            elif res.request == "updateSubtree":
-                print("getting subtree")
-                sub_tree = res.current_player
-                print("Gotten subtree")
-                for node in sub_tree.nodes.values():
-                    print(node)
-                    if node.identifier.name in T.nodes:
-                        T.nodes[node.identifier.name].data = node.data
-                    else:
-                        T.add_node(node.identifier, node.data, parent=T.nodes[node.parent.identifier.name])
-
-
-
-            elif res.request == "stop":
-                break
-
-            if ((T.rounds_trained + 1) % 150000 == 0) and is_bot is False:
-                print("intermediate save of model")
-                T.to_object("model"+str(T.rounds_trained))
-                T.rounds_trained += 1
-
-        T.to_object("model")
-        print("Tree service shutdown")
-        print("Len: " + str(len(T.nodes)))
-        print("rounds trained: " + str(T.rounds_trained))
-    except SystemExit:
-        raise
-    except:
-        traceback.print_exc(file=sys.stdout)

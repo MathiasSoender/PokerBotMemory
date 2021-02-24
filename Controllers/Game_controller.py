@@ -26,37 +26,36 @@ class game_controller:
 
         return players
 
+    """Does an action for a player. Can be bot or Human."""
     def do_action(self, current_node, player, players, LOG = None, Human = False, is_local_sim = False):
-        # Prob_of_child = Pi
         if not Human:
             new_node, prob_of_child = current_node.select_child(player.win_odds, LOG=LOG, prob=30)
         else:
             new_node = current_node
-            prob_of_child = 1
 
         if self.preflop:
             player.update_range_num(new_node)
 
-        # Info which is passed to master
+        # Info which is passed to backprop
         if is_local_sim:
-            self.selected_nodes.append((new_node, player.win_odds, player, prob_of_child))
+            self.selected_nodes.append((new_node, player.win_odds, player))
         else:
-            self.selected_nodes.append((new_node.identifier, player.win_odds, player, prob_of_child))
+            self.selected_nodes.append((new_node.identifier, player.win_odds, player))
 
-        if new_node.identifier.is_action("fold"):
+        if new_node.identifier.is_action("f"):
             player.folded = True
             player.bet = 0
 
-        elif new_node.identifier.is_action("allIn"):
+        elif new_node.identifier.is_action("AL"):
             player.chips = 0
             player.bet = 100
             players.set_done_actions(False)
 
-        elif new_node.identifier.is_action("call"):
+        elif new_node.identifier.is_action("ca"):
             player.chips = players.find_max_bet_player().chips
 
         # bet1 = 40%, 2.5BB
-        elif new_node.identifier.is_action("bet1"):
+        elif new_node.identifier.is_action("b1"):
             current_bet = players.find_max_bet_player().bet
 
             # This is an open. Last statement may not be needed.
@@ -73,7 +72,7 @@ class game_controller:
             players.set_done_actions(False)
 
         # bet2 = 80%, 3BB
-        elif new_node.identifier.is_action("bet2"):
+        elif new_node.identifier.is_action("b2"):
             current_bet = players.find_max_bet_player().bet
 
             if self.preflop and not players.has_opened() and current_bet == 1:
@@ -103,10 +102,7 @@ class game_controller:
 
 
     def check_if_street_ended(self, players):
-        if players.done_actions():
-            return True
-        return False
-
+        return players.done_actions()
 
     def update_street(self, deck, players):
         streets = ["preflop", "flop", "turn", "river", "end"]
@@ -144,22 +140,23 @@ class game_controller:
 
         return winner
 
-    """ Used only by master """
+
     def back_prop(self, pot, winner):
         name_winners = [w.name for w in winner]
 
-        for node, odds, player, pi in self.selected_nodes:
+        for node, odds, player in self.selected_nodes:
             if player.folded:
-                node.data.update(odds, pi, player.chips - 100, node.siblings())
+                node.data.update(odds, player.chips - 100)
             else:
                 # If the player has won, all chips in the pot / len(winners) is associated to his nodes
                 if player.name in name_winners:
                     # pi = probability of selecting child.
                     # - his own chips (he does not win these, simply gets em back)
-                    node.data.update(odds, pi, pot / len(winner) - (100 - player.chips), node.siblings())
+                    node.data.update(odds, pot / len(winner) - (100 - player.chips))
                 else:
-                    node.data.update(odds, pi, player.chips - 100, node.siblings())
+                    node.data.update(odds, player.chips - 100)
 
+        return self.selected_nodes
 
     def find_next_player(self, current_player, players):
         players.update_remaining()
@@ -188,6 +185,7 @@ class game_controller:
 
         return next_player
 
+    """Passes a package to the tree service. Receives the requested node"""
     def request_node(self, current_node, tree_Q, P, current_player, all_players, ID):
         if current_node is not None:
             tree_Q.put(tree_package(current_node.identifier.name, current_player, all_players, self, "process", ID))

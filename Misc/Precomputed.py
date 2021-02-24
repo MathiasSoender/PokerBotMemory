@@ -85,38 +85,3 @@ class precomputed_odds:
         self.odds = t.odds
         gc.enable()
 
-
-
-def pre_computed_service(Pre_computed_queue, channels, is_bot = False, path = "pre_odds"):
-    r = 0
-    os.chdir("..")
-    if is_bot:
-        os.chdir("..")
-    os.chdir("Simulator_main")
-
-    pre_computed = precomputed_odds()
-
-    while True:
-        res = Pre_computed_queue.get()
-
-        if res.request == "process":
-            odds = pre_computed.find_odds(res.hand, res.name, res.opponents)
-
-            if odds is None:
-                channels[res.ID].put((False, 0))
-            else:
-                channels[res.ID].put((True, odds))
-
-        elif res.request == "add":
-            pre_computed.add(res.hand, res.name, res.opponents, res.odds)
-
-        elif res.request == "stop":
-            break
-        r += 1
-
-        if (r + 1) % 5000 == 0:
-            pre_computed.to_object("pre_odds")
-
-    pre_computed.to_object("pre_odds")
-    print("pre_computed service shutdown")
-

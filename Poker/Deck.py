@@ -3,21 +3,21 @@ from Poker.Card import Card
 
 class Deck:
     def __init__(self):
-        self.deck = []
+        self.deck = set()
         suits = ["s","d","h","c"]
         for i in range(2, 15):
             for suit in suits:
-                self.deck.append(Card(i, suit))
+                self.deck.add(Card(i, suit))
 
     def remove_card(self, rm_card):
-        for card in self.deck:
-            if card.equals(rm_card):
-                self.deck.remove(card)
-                return True
+        if rm_card in self.deck:
+            self.deck.remove(rm_card)
+            return True
         return False
 
+
     def draw(self, remove = True):
-        card = random.choice(self.deck)
+        card = random.sample(self.deck, 1)[0]
         if remove:
             self.remove_card(card)
         return card

@@ -1,4 +1,4 @@
-from Tree.data import Data
+from Tree.data2 import Data
 import math
 import random
 from Tree.Identifier import Identifier
@@ -9,7 +9,6 @@ class Node:
         self.children = set()
         self.identifier = identifier
         self.data = data
-        self.parent = parent
 
 
     """ Finds a rooted subtree of node """
@@ -33,32 +32,32 @@ class Node:
 
         return T
 
-    def find_distribution(self, win_probability):
+    def find_distribution(self, win_probability, thresh=150):
         # Softmax
         softmax_sum = 0
         softmax_distribution = []
 
         for child in self.children:
             child_split = child.data.find_split(win_probability)
-            softmax_sum += math.exp(sum(child.data.rewards[child_split]) / child.data.threshold)
+            if child.data.N[child_split] > thresh:
+                beta = 1
+            else:
+                beta = child.data.N[child_split] / thresh
+
+            softmax_sum += math.exp(child.data.c_reward[child_split] * beta)
 
         for child in self.children:
             child_split = child.data.find_split(win_probability)
+            if child.data.N[child_split] > thresh:
+                beta = 1
+            else:
+                beta = child.data.N[child_split] / thresh
+
             softmax_distribution.append((child,
-                                         math.exp(sum(child.data.rewards[child_split]) / child.data.threshold) /
+                                         math.exp(child.data.c_reward[child_split] * beta) /
                                          softmax_sum))
 
         return softmax_distribution
-
-
-    def siblings(self):
-        if self.parent is not None:
-            siblings = []
-            for sibling in self.parent.children:
-                if sibling.identifier.name != self.identifier.name:
-                    siblings.append(sibling)
-            return siblings
-        return None
 
 
     def select_child(self, win_probability, greedy = True, LOG = None, prob = 25):
@@ -91,13 +90,6 @@ class Node:
     def add_child(self, new_node):
         self.children.add(new_node)
 
-    def depth(self):
-        depth = 1
-        current_parent = self.parent
-        while current_parent is not None:
-            current_parent = current_parent.parent
-            depth += 1
-        return depth
 
     def local_node(self):
         children = set()

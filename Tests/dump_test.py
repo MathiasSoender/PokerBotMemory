@@ -1,6 +1,9 @@
 import os
 from Tree.Tree import Tree
 import time
+import pickle
+
+
 
 os.chdir("..")
 os.chdir("simulator_main")
@@ -10,4 +13,6 @@ print("Time taken for load: " + str(time.time()-t1))
 
 t1 = time.time()
 T.to_object("test")
-print("Time taken for proto 3: " + str(time.time()-t1))
+print("Time taken for pickle: " + str(time.time()-t1))
+t1 = time.time()
+

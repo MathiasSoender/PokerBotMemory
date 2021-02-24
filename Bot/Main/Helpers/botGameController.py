@@ -59,7 +59,7 @@ class game_controller:
             for name, f_info in folded_info:
                 if current_player.name == name and f_info:
                     # A simple hack - change the name (Tree Service only looks at name when fetching)
-                    current_node.identifier.name += self.update_node_name(current_player.name, "fold")
+                    current_node.identifier.name += self.update_node_name(current_player.name, "f")
                     folded = True
 
             if not folded:
@@ -70,15 +70,15 @@ class game_controller:
                     if current_player.name == name:
                         # check
                         if b_info == 0:
-                            current_node.identifier.name += self.update_node_name(current_player.name, "check")
+                            current_node.identifier.name += self.update_node_name(current_player.name, "ch")
 
                         # call
                         elif b_info == current_bet:
                             # Case if BB checks preflop (would think it was a call otherwise)
                             if current_player.name == "BB" and self.preflop and b_info == 1:
-                                current_node.identifier.name += self.update_node_name(current_player.name, "check")
+                                current_node.identifier.name += self.update_node_name(current_player.name, "ch")
                             else:
-                                current_node.identifier.name += self.update_node_name(current_player.name, "call")
+                                current_node.identifier.name += self.update_node_name(current_player.name, "ca")
 
                         # bets
                         else:
@@ -100,20 +100,20 @@ class game_controller:
         if self.preflop:
             player.update_range_num(current_node)
 
-        if current_node.identifier.is_action("fold"):
+        if current_node.identifier.is_action("f"):
             player.folded = True
             player.bet = 0
 
-        elif current_node.identifier.is_action("allIn"):
+        elif current_node.identifier.is_action("AL"):
             player.chips = 0
             player.bet = 100
             self.players.set_done_actions(False)
 
-        elif current_node.identifier.is_action("call"):
+        elif current_node.identifier.is_action("ca"):
             player.chips = self.players.find_max_bet_player().chips
 
 
-        elif current_node.identifier.is_action("bet1") or current_node.identifier.is_action("bet2"):
+        elif current_node.identifier.is_action("b1") or current_node.identifier.is_action("b2"):
             player.chips = max(player.chips - (actual_bet - player.bet), 0)
             player.bet = actual_bet
             self.players.set_done_actions(False)
@@ -144,21 +144,21 @@ class game_controller:
         if self.preflop:
             player.update_range_num(new_node)
 
-        if new_node.identifier.is_action("fold"):
+        if new_node.identifier.is_action("f"):
             player.folded = True
             player.bet = 0
 
-        elif new_node.identifier.is_action("allIn"):
+        elif new_node.identifier.is_action("AL"):
             player.chips = 0
             player.bet = 100
             self.players.set_done_actions(False)
 
-        elif new_node.identifier.is_action("call"):
+        elif new_node.identifier.is_action("ca"):
             player.chips = self.players.find_max_bet_player().chips
 
         # bet1 = 40%, 2.5BB
 
-        elif new_node.identifier.is_action("bet1"):
+        elif new_node.identifier.is_action("b1"):
             current_bet = self.players.find_max_bet_player().bet
 
             # This is an open. Last statement may not be needed.
@@ -174,7 +174,7 @@ class game_controller:
             self.players.set_done_actions(False)
 
         # bet2 = 80%, 3BB
-        elif new_node.identifier.is_action("bet2"):
+        elif new_node.identifier.is_action("b2"):
             current_bet = self.players.find_max_bet_player().bet
 
             if self.preflop and not self.players.has_opened() and current_bet == 1:
@@ -240,22 +240,22 @@ class game_controller:
         pot_size = (-current_bet + new_bet) / (self.players.pot_size() + current_bet)
         print("pot size bet:" + str(pot_size))
         if new_bet >= 95:
-            return "allIn"
+            return "AL"
 
         if not self.players.has_opened() and self.preflop:
             if 3 >= new_bet >= 2:
-                return "bet1"
+                return "b1"
             elif 6 >= new_bet > 3:
-                return "bet2"
+                return "b2"
             else:
-                return "allIn"
+                return "AL"
 
         if 0.6 > pot_size > 0:
-            return "bet1"
+            return "b1"
         elif 1.2 > pot_size >= 0.6:
-            return "bet2"
+            return "b2"
         else:
-            return "allIn"
+            return "AL"
 
     def click_action(self, cur_node, clicker):
         print("doing action for: " + str(cur_node) + " pot size: " + str(self.players.pot_size()))
@@ -265,25 +265,25 @@ class game_controller:
         if self.players.pot_size() - self.hero.bet == 1.5:
             Open = False
 
-        if cur_node.identifier.is_action("fold"):
+        if cur_node.identifier.is_action("f"):
             clicker.fold()
 
-        elif cur_node.identifier.is_action("call"):
+        elif cur_node.identifier.is_action("ca"):
             if cur_node.identifier.allIn_occured():
                 clicker.max()
             else:
                 clicker.call()
 
-        elif cur_node.identifier.is_action("bet1"):
+        elif cur_node.identifier.is_action("b1"):
             clicker.bet1(Open)
 
-        elif cur_node.identifier.is_action("bet2"):
+        elif cur_node.identifier.is_action("b2"):
             clicker.bet2(Open)
 
-        elif cur_node.identifier.is_action("allIn"):
+        elif cur_node.identifier.is_action("AL"):
             clicker.max()
 
-        elif cur_node.identifier.is_action("check"):
+        elif cur_node.identifier.is_action("ch"):
             clicker.check()
 
     def update_street(self, deck, players, current_node, community):
@@ -321,14 +321,14 @@ class game_controller:
                 if p_name == name:
                     if folded:
                         if p_name == "BB" and self.players.find_max_bet_player().bet == 1:
-                            current_node.identifier.name += self.update_node_name(name, "check")
+                            current_node.identifier.name += self.update_node_name(name, "ch")
                         else:
-                            current_node.identifier.name += self.update_node_name(name, "fold")
+                            current_node.identifier.name += self.update_node_name(name, "f")
                     else:
                         if p_name == "BB" and self.players.find_max_bet_player().bet == 1:
-                            current_node.identifier.name += self.update_node_name(name, "check")
+                            current_node.identifier.name += self.update_node_name(name, "ch")
                         else:
-                            current_node.identifier.name += self.update_node_name(name, "call")
+                            current_node.identifier.name += self.update_node_name(name, "ca")
 
                     current_node = self.request_node(current_node, None, None, self.ID)
                     self.process_action_human(current_node, self.players.find_player(name=name), None)
@@ -345,12 +345,12 @@ class game_controller:
             for p_name, folded in folded_info:
                 if p_name == name:
                     if folded:
-                        current_node.identifier.name += self.update_node_name(name, "fold")
+                        current_node.identifier.name += self.update_node_name(name, "f")
                     else:
                         if self.players.find_max_bet_player().bet == 0:
-                            current_node.identifier.name += self.update_node_name(name, "check")
+                            current_node.identifier.name += self.update_node_name(name, "ch")
                         else:
-                            current_node.identifier.name += self.update_node_name(name, "call")
+                            current_node.identifier.name += self.update_node_name(name, "ca")
 
                     current_node = self.request_node(current_node, None, None, self.ID)
                     self.process_action_human(current_node, self.players.find_player(name=name), None)
@@ -367,12 +367,12 @@ class game_controller:
             for p_name, folded in folded_info:
                 if p_name == name:
                     if folded:
-                        current_node.identifier.name += self.update_node_name(name, "fold")
+                        current_node.identifier.name += self.update_node_name(name, "fo")
                     else:
                         if self.players.find_max_bet_player().bet == 0:
-                            current_node.identifier.name += self.update_node_name(name, "check")
+                            current_node.identifier.name += self.update_node_name(name, "ch")
                         else:
-                            current_node.identifier.name += self.update_node_name(name, "call")
+                            current_node.identifier.name += self.update_node_name(name, "ca")
 
                     current_node = self.request_node(current_node, None, None, self.ID)
                     self.process_action_human(current_node, self.players.find_player(name=name), None)

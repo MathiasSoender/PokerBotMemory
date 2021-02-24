@@ -48,7 +48,7 @@ class Identifier:
 
         if not new_street[0]:
             for _, action in self.find_current_street():
-                if action in ["bet1", "bet2", "bet3", "allIn"]:
+                if action in ["b1", "b2", "b3", "AL"]:
                     return True
 
         if self.find_current_street() == self.preflop:
@@ -60,7 +60,7 @@ class Identifier:
 
     def allIn_occured(self):
         for _, action in self.find_current_street():
-            if action == "allIn":
+            if action == "AL":
                 return True
         return False
 

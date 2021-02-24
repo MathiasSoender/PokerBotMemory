@@ -1,3 +1,4 @@
+# All packages that are sent through queues.
 
 class package:
     def __init__(self, selected_nodes, community, players, pot, winner, request):

@@ -2,7 +2,6 @@
 # ID 0 = Left, ID 1 = Right
 import time
 from Bot.Misc.MouseMover import HumanMovementCreator as HMC
-from queue import Queue
 import pyautogui as p
 
 import random
@@ -10,18 +9,6 @@ import random
 from Bot.Readers.misc import change_dir
 from Misc.Simulator_package import click_package
 
-
-def ClickMaster(Click_channels, Click_queue):
-    # Grab the first request for lock
-    while True:
-        res = Click_queue.get()
-        if res.request == "get":
-            Click_channels[res.ID].put(200)
-            time.sleep(0.5)
-            Click_channels[res.ID].get()
-
-        elif res.request == "stop":
-            return
 
 
 class Clicker:

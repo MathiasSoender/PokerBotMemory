@@ -1,10 +1,12 @@
 import multiprocessing as mp
-from Bot.Misc.Clickers import ClickMaster, Clicker
+from Bot.Misc.Clickers import Clicker
 from Bot.Main.Loop import loop
 from Bot.Misc.MiscActions import MiscActions
-from Misc.Precomputed import pre_computed_service
+from Services.OddsPrecomputedService import pre_computed_service
 from Misc.Simulator_package import tree_package, pre_computed_package, click_package
-from Tree.Tree import tree_service
+from Services.TreeService import tree_service
+from Services.ClickerService import ClickMaster
+
 from Simulator_main.training_loop import main_loop
 
 
