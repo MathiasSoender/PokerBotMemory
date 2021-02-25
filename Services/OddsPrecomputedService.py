@@ -11,7 +11,6 @@ def pre_computed_service(Pre_computed_queue, channels, is_bot = False, path = "p
     os.chdir("Simulator_main")
 
     pre_computed = precomputed_odds()
-    print(pre_computed.odds)
     while True:
         res = Pre_computed_queue.get()
 

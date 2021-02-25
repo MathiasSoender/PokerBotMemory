@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 import traceback
@@ -77,9 +78,12 @@ def tree_service(tree_Q, channels, new_tree, path, is_bot=False):
             elif res.request == "stop":
                 break
 
-            if ((T.rounds_trained + 1) % 150000 == 0) and is_bot is False:
+            if ((T.rounds_trained + 1) % 50 == 0) and is_bot is False:
                 print("intermediate save of model")
-                T.to_object("model"+str(T.rounds_trained))
+                rt = "model" + str(T.rounds_trained)
+                T.to_object(rt)
+                T = Tree(path=rt)
+
                 T.rounds_trained += 1
 
         T.to_object("model")
