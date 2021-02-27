@@ -10,13 +10,11 @@ class Data:
         self.all_probabilities = []
         self.c_reward = {}
 
-        self.threshold = 200
         self.fold_node = False
 
         if fold_node:
             self.splits = [1]
             self.fold_node = True
-            self.threshold = 1
 
         elif pre_flop:
             self.splits = list(range(1, 6))
@@ -44,7 +42,13 @@ class Data:
         return assigned_split
 
     def update_split(self, probability):
-        if len(self.all_probabilities) > self.threshold:
+        if self.fold_node:
+            threshold = 1
+        else:
+            threshold = 250
+
+
+        if len(self.all_probabilities) > threshold:
             _ = self.all_probabilities.pop(random.randrange(len(self.all_probabilities)))
 
         else:
@@ -70,12 +74,10 @@ class Data:
             self.update_split(chosen_probability)
 
     def update_reward(self, chosen_split, reward):
-        decay = 1/((self.N[chosen_split]+1)*0.02)
 
         if self.fold_node:
             self.c_reward[chosen_split] = reward
         else:
-            self.c_reward[chosen_split] = round(
-                ((self.c_reward[chosen_split] * self.N[chosen_split] * decay) + reward) /
-                (self.N[chosen_split] * decay + 1), 5)
+            self.c_reward[chosen_split] = self.c_reward[chosen_split] * 0.985 + reward
+
 

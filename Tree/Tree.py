@@ -113,7 +113,7 @@ class Tree:
                     # Update with new action
                     iden.update_street_list((current_player.name, string))
                     iden.create_name()
-                    if string == "fold":
+                    if string == "f":
                         self.add_node(iden, data=Data(pre_flop=controller.preflop, fold_node=True), parent=current_node)
                     else:
                         self.add_node(iden, data=Data(pre_flop=controller.preflop), parent=current_node)

@@ -4,21 +4,22 @@ import random
 from Tree.Identifier import Identifier
 import copy
 
+
 class Node:
     def __init__(self, identifier: Identifier, data: Data, parent=None):
         self.children = set()
         self.identifier = identifier
         self.data = data
 
-
     """ Finds a rooted subtree of node """
+
     def subtree(self):
         from Tree.Tree import Tree
 
         new_root = copy.copy(self)
         new_root.parent = None
 
-        T = Tree(new_tree=True, root = new_root)
+        T = Tree(new_tree=True, root=new_root)
         child_list = [new_root]
 
         for c in new_root.children:
@@ -33,7 +34,10 @@ class Node:
         return T
 
     def find_distribution(self, win_probability, thresh=150):
-        # Softmax
+
+        def find_denom(n, c=0.985):
+            return (c ** n - 1) / (c - 1)
+
         softmax_sum = 0
         softmax_distribution = []
 
@@ -44,7 +48,16 @@ class Node:
             else:
                 beta = child.data.N[child_split] / thresh
 
-            softmax_sum += math.exp(child.data.c_reward[child_split] * beta)
+            if child.data.fold_node:
+                softmax_sum += math.exp(child.data.c_reward[child_split] * beta)
+
+            else:
+
+                if child.data.N[child_split] != 0:
+                    softmax_sum += math.exp((child.data.c_reward[child_split] /
+                                             find_denom(child.data.N[child_split])) * beta)
+                else:
+                    softmax_sum += 1
 
         for child in self.children:
             child_split = child.data.find_split(win_probability)
@@ -53,14 +66,22 @@ class Node:
             else:
                 beta = child.data.N[child_split] / thresh
 
-            softmax_distribution.append((child,
-                                         math.exp(child.data.c_reward[child_split] * beta) /
-                                         softmax_sum))
+            if child.data.fold_node:
+                softmax_distribution.append((child,
+                                             math.exp(child.data.c_reward[child_split] * beta) /
+                                             softmax_sum))
+            else:
+                if child.data.N[child_split] == 0:
+                    softmax_distribution.append((child, 1 / softmax_sum))
+
+                else:
+
+                    softmax_distribution.append((child, math.exp((child.data.c_reward[child_split] /
+                                                 find_denom(child.data.N[child_split])) * beta) / softmax_sum))
 
         return softmax_distribution
 
-
-    def select_child(self, win_probability, greedy = True, LOG = None, prob = 25):
+    def select_child(self, win_probability, greedy=True, LOG=None, prob=25):
         # Zips the distribution into: Children, distribution values
         dis = self.find_distribution(win_probability)
         Children, distribution = zip(*dis)
@@ -72,7 +93,7 @@ class Node:
             if LOG is not None:
                 LOG.log("E-greedy child selection")
 
-            return child, 1/len(Children)
+            return child, 1 / len(Children)
 
         # Otherwise use the soft-max distribution
         if LOG is not None:
@@ -90,7 +111,6 @@ class Node:
     def add_child(self, new_node):
         self.children.add(new_node)
 
-
     def local_node(self):
         children = set()
         for c in self.children:
@@ -104,7 +124,6 @@ class Node:
             c.parent = None
 
         return new_node
-
 
     def __str__(self):
         return str((self.identifier.name, self.data.__str__()))
