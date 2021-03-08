@@ -1,3 +1,5 @@
+import random
+
 from Tree.node import Node
 from Tree.Identifier import Identifier
 from Tree.data2 import Data
@@ -124,7 +126,6 @@ class Tree:
     """Saves the tree in different files. Useful as pickle has high memory overhead (5x)"""
     def to_object(self, path):
         print("saving tree")
-        gc.disable()
         if path not in os.listdir():
             os.makedirs(path)
         else:
@@ -149,35 +150,41 @@ class Tree:
 
         # Dump nodes, remember to cut children.
         idx = 0
+        self.root.children = None
+
         dump_list = [self.root]
-        for node in self.nodes.values():
-            if ((idx+1) % 50000) == 0:
+        n_k = list(self.nodes.keys())
+        random.shuffle(n_k)
+
+        for i in range(0, len(n_k)):
+            if ((idx+1) % 100000) == 0:
 
                 pickle.dump(dump_list, open("nodes" + str(idx), "wb"), protocol=4)
 
                 dump_list = []
 
-            node.children = None
-            dump_list.append(node)
+            self.nodes[n_k[i]].children = None
+            dump_list.append(self.nodes[n_k[i]])
+            self.nodes[n_k[i]] = None
+            n_k[i] = None
+
             idx += 1
         pickle.dump(dump_list, open("nodes" + str(idx), "wb"), protocol=4)
 
         os.chdir("..")
         os.chdir("..")
-        gc.enable()
 
     """Gets the tree from different files - rebuilds it. Useful as pickle has high memory overhead (5x)"""
     def get_object(self, path):
         os.chdir(path)
         os.chdir("etc")
-        gc.disable()
         child_map = pickle.load(open("child_map", "rb"))
         self.child_map = child_map
-        child_map = None
+        del child_map
 
         rounds_trained = pickle.load(open("rounds_trained", "rb"))
         self.rounds_trained = rounds_trained
-        rounds_trained = None
+        del rounds_trained
 
         os.chdir("..")
         os.chdir("nodes")
@@ -185,21 +192,17 @@ class Tree:
         all_nodes = {}
         for node_pack in os.listdir():
             nodes_list = pickle.load(open(node_pack, "rb"))
-            nodes_dict = {}
 
             for node in nodes_list:
                 node.children = set()
-                nodes_dict[node.identifier.name] = node
+                all_nodes[node.identifier.name] = node
 
-            all_nodes = {**all_nodes, **nodes_dict}
-            nodes_list = None
-            nodes_dict = None
+            del nodes_list
 
         self.nodes = all_nodes
-        all_nodes = None
+        del all_nodes
 
         self.root = self.nodes["root"]
-
         for node in self.nodes.values():
             children_names = self.child_map.get(node.identifier.name)
             # Leaves have no children..
@@ -209,6 +212,5 @@ class Tree:
 
         os.chdir("..")
         os.chdir("..")
-        gc.enable()
 
 
