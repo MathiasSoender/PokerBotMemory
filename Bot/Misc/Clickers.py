@@ -10,7 +10,6 @@ from Bot.Readers.misc import change_dir
 from Misc.Simulator_package import click_package
 
 
-
 class Clicker:
     def __init__(self, ID, own_queue, click_Q):
         self.ID = ID
@@ -38,8 +37,7 @@ class Clicker:
         else:
             return random.uniform(1 - uniform, 1 + uniform)
 
-    def bet1(self, open = True):
-
+    def bet1(self, open=True):
 
         if open:
             self.press_key("a")
@@ -54,7 +52,7 @@ class Clicker:
             self._raise()
             self.return_lock()
 
-    def bet2(self, open = True):
+    def bet2(self, open=True):
         if open:
             self.press_key("s")
         else:
@@ -90,7 +88,6 @@ class Clicker:
         time.sleep(random.uniform(0.1, 0.3))
         self._raise()
         self.return_lock()
-
 
     def call(self):
         self.request_lock()
@@ -134,9 +131,7 @@ class Clicker:
         time.sleep(random.uniform(0.05, 0.1))
         p.keyUp(key)
 
-
         self.return_lock()
-
 
     def start_game(self):
         self.request_lock()
@@ -170,3 +165,30 @@ class Clicker:
             return True
 
         return False
+
+
+def ClickMaster(Click_channels, Click_queue):
+    # Grab the first request for lock
+    while True:
+        res = Click_queue.get()
+        if res.request == "get":
+            Click_channels[res.ID].put(200)
+            time.sleep(1)
+            Click_channels[res.ID].get()
+
+        elif res.request == "stop":
+            return
+
+
+if __name__ == "__main__":
+    import multiprocessing as mp
+
+    click_queues = []
+    click_queues.append(mp.Queue())
+    master_click_queue = mp.Queue()
+
+    click_service = mp.Process(target=ClickMaster, args=(click_queues, master_click_queue))
+    click_service.start()
+
+    clicker = Clicker(0, click_queues[0], master_click_queue)
+    clicker.bet1()

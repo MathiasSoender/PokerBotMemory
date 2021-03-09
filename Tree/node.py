@@ -6,6 +6,9 @@ import copy
 
 
 class Node:
+
+    __slots__ = 'children', 'identifier', 'data'
+
     def __init__(self, identifier: Identifier, data: Data, parent=None):
         self.children = set()
         self.identifier = identifier
@@ -35,7 +38,7 @@ class Node:
 
     def find_distribution(self, win_probability, thresh=150):
 
-        def find_denom(n, c=0.985):
+        def find_denom(n, c=0.995):
             return (c ** n - 1) / (c - 1)
 
         softmax_sum = 0
@@ -117,11 +120,9 @@ class Node:
             children.add(copy.copy(c))
 
         new_node = copy.copy(self)
-        new_node.parent = None
         new_node.children = children
         for c in new_node.children:
             c.children = set()
-            c.parent = None
 
         return new_node
 

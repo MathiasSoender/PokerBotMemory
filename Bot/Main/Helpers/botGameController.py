@@ -3,6 +3,7 @@ import time
 from Player.all_players import Players
 from Player.player_types import BB, BTN, CO, MP, SB, UTG
 from Misc.Simulator_package import tree_package, package
+from Tree.Identifier import PN_int_to_string, A_int_to_string
 from subtree_trainer.Simulator import sim
 import copy
 import pickle
@@ -316,6 +317,8 @@ class game_controller:
 
         while list(current_node.children)[0].identifier.flop == []:
             name, ac = list(current_node.children)[0].identifier.find_current_street()[-1]
+            name = PN_int_to_string(name)
+            ac = A_int_to_string(ac)
 
             for p_name, folded in folded_info:
                 if p_name == name:
@@ -341,6 +344,9 @@ class game_controller:
 
         while list(current_node.children)[0].identifier.turn == []:
             name, ac = list(current_node.children)[0].identifier.find_current_street()[-1]
+            name = PN_int_to_string(name)
+            ac = A_int_to_string(ac)
+
 
             for p_name, folded in folded_info:
                 if p_name == name:
@@ -363,7 +369,8 @@ class game_controller:
 
         while list(current_node.children)[0].identifier.river == []:
             name, ac = list(current_node.children)[0].identifier.find_current_street()[-1]
-
+            name = PN_int_to_string(name)
+            ac = A_int_to_string(ac)
             for p_name, folded in folded_info:
                 if p_name == name:
                     if folded:

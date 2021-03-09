@@ -1,3 +1,5 @@
+from Tree.Identifier import PN_int_to_string, A_int_to_string, tuple_int_to_string
+
 
 class loggerNonStatic:
     def __init__(self, ID):
@@ -31,7 +33,7 @@ class loggerNonStatic:
         self.log("")
         self.log(txt)
         for node in nodes:
-            ac = str(node[0].identifier.find_current_street()[-1])
+            ac = node[0].identifier.find_current_street()[-1]
 
             if ac == "F:":
                 ac = node[0].identifier.preflop[-1]
@@ -42,11 +44,15 @@ class loggerNonStatic:
             elif ac == "end":
                 ac = node[0].identifier.river[-1]
 
-            self.log("Node: " + str(ac) + " " + str(node[0].data))
+
+
+            self.log("Node: " + str(tuple_int_to_string(ac)) + " " + str(node[0].data))
         self.log("")
 
     def children_log(self, nodes):
         for node, dis in nodes:
-            self.log(str(node.identifier.find_current_street()[-1]) + ": " + str(round(dis,3)) + ", ", sep=" ")
+            t = tuple_int_to_string(node.identifier.find_current_street()[-1])
+
+            self.log(str(t) + ": " + str(round(dis, 3)) + ", ", sep=" ")
         self.log("")
 

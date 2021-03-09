@@ -16,7 +16,6 @@ class Tree:
         self.nodes = {}
         self.root = root
         self.rounds_trained = 0
-        self.child_map = {}
 
 
         # For multi-processing. Is reset for each new train session.
@@ -45,13 +44,6 @@ class Tree:
                 self.nodes[ID.name] = new_node
                 self.nodes[parent.identifier.name].add_child(new_node)
 
-                if self.child_map.get(parent.identifier.name) is None:
-                    children = set()
-                else:
-                    children = self.child_map[parent.identifier.name]
-
-                children.add(new_node.identifier.name)
-                self.child_map[parent.identifier.name] = children
 
     def print(self):
 
@@ -140,10 +132,20 @@ class Tree:
 
         # Dump etc
         os.chdir("etc")
-        pickle.dump(self.child_map, open("child_map", "wb"), protocol=4)
+        child_map = {}
+        for node in self.nodes.values():
+            if len(node.children) > 0:
+                child_list = []
+                for child in node.children:
+                    child_list.append(child.identifier.name)
+                child_map[node.identifier.name] = child_list
+
+            node.children = None
+
+        pickle.dump(child_map, open("child_map", "wb"), protocol=4)
         pickle.dump(self.rounds_trained, open("rounds_trained", "wb"), protocol=4)
 
-        self.child_map = None
+        del child_map
 
         os.chdir("..")
         os.chdir("nodes")
@@ -179,8 +181,6 @@ class Tree:
         os.chdir(path)
         os.chdir("etc")
         child_map = pickle.load(open("child_map", "rb"))
-        self.child_map = child_map
-        del child_map
 
         rounds_trained = pickle.load(open("rounds_trained", "rb"))
         self.rounds_trained = rounds_trained
@@ -204,7 +204,7 @@ class Tree:
 
         self.root = self.nodes["root"]
         for node in self.nodes.values():
-            children_names = self.child_map.get(node.identifier.name)
+            children_names = child_map.get(node.identifier.name)
             # Leaves have no children..
             if children_names is not None:
                 for c in children_names:
@@ -212,5 +212,6 @@ class Tree:
 
         os.chdir("..")
         os.chdir("..")
+        del child_map
 
 

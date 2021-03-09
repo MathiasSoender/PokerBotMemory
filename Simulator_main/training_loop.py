@@ -7,7 +7,7 @@ from Misc.Logger import loggerNonStatic
 from Misc.Simulator_package import package
 from Controllers.Game_controller import game_controller
 from Controllers.Loop_controller import LoopController
-
+from Tree.Identifier import tuple_int_to_string
 
 
 def sim(rounds, new_tree = False,  tree_name = "model", cores = 2):
@@ -68,7 +68,7 @@ def main_loop(P, tree_Q, pre_computed_Q, result_Q = None, end_Q = None, ID = 0):
 
             # Do action
             current_node = controller.do_action(current_node, current_player, players, LOG=logger)
-            logger.log("Selected node: " + str(current_node.identifier.find_current_street()[-1]) + "\n")
+            logger.log("Selected node: " + str(tuple_int_to_string(current_node.identifier.find_current_street()[-1])) + "\n")
 
             # Next player's turn
             current_player = controller.find_next_player(current_player, players)
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     # multiprocessing.freeze_support()
 
     total = time.time()
-    sim(rounds=100, new_tree=False, cores=6)
+    sim(rounds=100, new_tree=True, cores=6)
     print("total time taken: " + str(time.time()-total))
     
 

@@ -1,6 +1,3 @@
-from Human_vs_bot.Display import Display
-
-
 class Card:
     def __init__(self, value, suit):
         if isinstance(suit, str):

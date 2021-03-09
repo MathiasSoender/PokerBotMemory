@@ -6,6 +6,7 @@ import traceback
 from Controllers.Game_controller import game_controller
 from Misc.Logger import loggerNonStatic
 from Tree.Tree import Tree
+from pympler import asizeof
 
 
 def tree_service(tree_Q, channels, new_tree, path, is_bot=False):
@@ -82,14 +83,17 @@ def tree_service(tree_Q, channels, new_tree, path, is_bot=False):
                 print("intermediate save of model")
                 rt = "model" + str(T.rounds_trained)
                 T.to_object(rt)
+                del T
                 T = Tree(path=rt)
 
                 T.rounds_trained += 1
 
+        print("size: " + str(asizeof.asizeof(T)))
         T.to_object("model")
         print("Tree service shutdown")
         print("Len: " + str(len(T.nodes)))
         print("rounds trained: " + str(T.rounds_trained))
+
     except SystemExit:
         raise
     except:

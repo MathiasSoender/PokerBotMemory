@@ -8,6 +8,8 @@ from Poker.Deck import Deck
 from Misc.Simulator_package import pre_computed_package
 import gc
 
+from Tree.Identifier import PN_int_to_string, A_int_to_string
+
 
 class Player(ABC):
     def __init__(self, hand):
@@ -118,7 +120,8 @@ class Player(ABC):
 
         # Select all previous actions:
         for name, action in node.identifier.preflop[0:-1]:
-
+            name = PN_int_to_string(name)
+            action = A_int_to_string(action)
             if action in ["b1", "b2", "b3"]:
                 if _threeBet:
                     _fourBet = True
@@ -140,6 +143,8 @@ class Player(ABC):
 
 
         name, action = node.identifier.preflop[-1]
+        name = PN_int_to_string(name)
+        action = A_int_to_string(action)
         if name != self.name:
             raise Exception("Error in update_range_num... last action is not equal the player")
 
