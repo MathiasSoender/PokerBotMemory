@@ -37,9 +37,6 @@ class Tree:
             self.nodes[ID.name] = new_node
 
         else:
-            if parent is None:
-                raise ValueError("Parent must be given")
-            else:
                 new_node = Node(ID, data, parent)
                 self.nodes[ID.name] = new_node
                 self.nodes[parent.identifier.name].add_child(new_node)
@@ -194,7 +191,7 @@ class Tree:
             nodes_list = pickle.load(open(node_pack, "rb"))
 
             for node in nodes_list:
-                node.children = set()
+                node.children = []
                 all_nodes[node.identifier.name] = node
 
             del nodes_list
@@ -208,7 +205,7 @@ class Tree:
             # Leaves have no children..
             if children_names is not None:
                 for c in children_names:
-                    node.children.add(self.nodes[c])
+                    node.children.append(self.nodes[c])
 
         os.chdir("..")
         os.chdir("..")

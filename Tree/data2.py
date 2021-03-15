@@ -82,4 +82,4 @@ class Data:
         if self.fold_node:
             self.c_reward[chosen_split] = reward
         else:
-            self.c_reward[chosen_split] = self.c_reward[chosen_split] * 0.995 + reward
+            self.c_reward[chosen_split] = self.c_reward[chosen_split] * 0.997 + reward

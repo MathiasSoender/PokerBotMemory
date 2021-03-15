@@ -10,7 +10,7 @@ class Node:
     __slots__ = 'children', 'identifier', 'data'
 
     def __init__(self, identifier: Identifier, data: Data, parent=None):
-        self.children = set()
+        self.children = []
         self.identifier = identifier
         self.data = data
 
@@ -20,13 +20,10 @@ class Node:
         from Tree.Tree import Tree
 
         new_root = copy.copy(self)
-        new_root.parent = None
 
         T = Tree(new_tree=True, root=new_root)
         child_list = [new_root]
 
-        for c in new_root.children:
-            c.parent = new_root
 
         while len(child_list) > 0:
             node = child_list.pop()
@@ -38,7 +35,7 @@ class Node:
 
     def find_distribution(self, win_probability, thresh=150):
 
-        def find_denom(n, c=0.995):
+        def find_denom(n, c=0.997):
             return (c ** n - 1) / (c - 1)
 
         softmax_sum = 0
@@ -112,17 +109,17 @@ class Node:
             return False
 
     def add_child(self, new_node):
-        self.children.add(new_node)
+        self.children.append(new_node)
 
     def local_node(self):
-        children = set()
+        children = []
         for c in self.children:
-            children.add(copy.copy(c))
+            children.append(copy.copy(c))
 
         new_node = copy.copy(self)
         new_node.children = children
         for c in new_node.children:
-            c.children = set()
+            c.children = []
 
         return new_node
 

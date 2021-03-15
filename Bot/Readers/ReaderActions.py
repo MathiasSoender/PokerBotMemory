@@ -12,7 +12,7 @@ class ReaderActions:
             self.leftBottom = (240, 372, 130, 20)
             self.leftTop = (252, 234, 110, 20)
             self.top = (500, 170, 132, 20)
-            self.rightTop = (600, 211, 130, 20)
+            self.rightTop = (575, 211, 155, 20)
             self.rightBottom = (600, 372, 150, 20)
 
 
@@ -49,7 +49,12 @@ class ReaderActions:
         idx = 0
         real_data = ""
 
-        processed = data.split("$")[-1]
+        if "$" in data:
+            processed = data.split("$")[-1]
+        elif "S" in data:
+            processed = data.split("S")[-1]
+        else:
+            processed = data.split("$")[-1]
 
         while not stop:
             try:

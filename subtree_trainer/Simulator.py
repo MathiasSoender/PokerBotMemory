@@ -9,7 +9,7 @@ def sim(subtree, community, players, street, denote):
     current_player = players.find_hero()
     GC, deck, players = parse_actions(current_node, community, players, street, denote)
     print("current player is: " + str(current_player))
-    GC.selected_nodes.append((subtree.root, current_player.win_odds, current_player, 1))
+    GC.selected_nodes.append((subtree.root, current_player.win_odds, current_player))
 
 
     while not GC.game_ended:

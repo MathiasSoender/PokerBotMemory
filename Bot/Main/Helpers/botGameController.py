@@ -124,7 +124,7 @@ class game_controller:
     def do_action_bot(self, current_node, player):
         # Before doing action, check if the node is minimal visited.
 
-        if sum(current_node.data.N.values()) < 200 and current_node.identifier.name != "P:":
+        if sum(current_node.data.N) < 200 and current_node.identifier.name != "P:":
             self.tree_Q.put(tree_package(current_node.identifier.name, None, None, None, "getSubtree", self.ID, None))
             subTree = self.own_Q.get()
             start_time = time.time()
@@ -315,8 +315,8 @@ class game_controller:
         current_node = self.request_node(current_node, None, None, self.ID)
         print(current_node)
 
-        while list(current_node.children)[0].identifier.flop == []:
-            name, ac = list(current_node.children)[0].identifier.find_current_street()[-1]
+        while current_node.children[0].identifier.flop == []:
+            name, ac = current_node.children[0].identifier.find_current_street()[-1]
             name = PN_int_to_string(name)
             ac = A_int_to_string(ac)
 
@@ -342,8 +342,8 @@ class game_controller:
         current_node = self.request_node(current_node, None, None, self.ID)
         print(current_node)
 
-        while list(current_node.children)[0].identifier.turn == []:
-            name, ac = list(current_node.children)[0].identifier.find_current_street()[-1]
+        while current_node.children[0].identifier.turn == []:
+            name, ac = current_node.children[0].identifier.find_current_street()[-1]
             name = PN_int_to_string(name)
             ac = A_int_to_string(ac)
 
@@ -367,8 +367,8 @@ class game_controller:
         current_node = self.request_node(current_node, None, None, self.ID)
         print(current_node)
 
-        while list(current_node.children)[0].identifier.river == []:
-            name, ac = list(current_node.children)[0].identifier.find_current_street()[-1]
+        while current_node.children[0].identifier.river == []:
+            name, ac = current_node.children[0].identifier.find_current_street()[-1]
             name = PN_int_to_string(name)
             ac = A_int_to_string(ac)
             for p_name, folded in folded_info:

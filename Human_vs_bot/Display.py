@@ -102,10 +102,10 @@ class Display:
 
 
     def actions(self, current_node):
-        for idx, child in enumerate(list(current_node.children)):
+        for idx, child in enumerate(current_node.children):
             print("Press: " + str(idx) + " for: " + str(child.identifier.find_current_street()[-1][1]))
 
-        return list(current_node.children)[int(input())]
+        return current_node.children[int(input())]
 
     def showdown(self, winner, pot, community, players):
         for w in winner:

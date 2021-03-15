@@ -34,3 +34,10 @@ def pre_computed_service(Pre_computed_queue, channels, is_bot = False, path = "p
 
     pre_computed.to_object("pre_odds")
     print("pre_computed service shutdown")
+
+if __name__ == "__main__":
+    import multiprocessing as mp
+    asd = mp.Queue()
+    ps = mp.Process(target=pre_computed_service,
+                                           args=(asd, None))
+    ps.start()

@@ -72,7 +72,7 @@ def tree_service(tree_Q, channels, new_tree, path, is_bot=False):
                     if node.identifier.name in T.nodes:
                         T.nodes[node.identifier.name].data = node.data
                     else:
-                        T.add_node(node.identifier, node.data, parent=T.nodes[node.parent.identifier.name])
+                        T.add_node(node.identifier, node.data, parent=T.nodes[node.identifier.find_parent()])
 
 
 
@@ -88,7 +88,7 @@ def tree_service(tree_Q, channels, new_tree, path, is_bot=False):
 
                 T.rounds_trained += 1
 
-        print("size: " + str(asizeof.asizeof(T)))
+        #print("size: " + str(asizeof.asizeof(T)))
         T.to_object("model")
         print("Tree service shutdown")
         print("Len: " + str(len(T.nodes)))

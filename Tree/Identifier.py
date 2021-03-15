@@ -105,6 +105,25 @@ class Identifier:
             elif street == "R:" and self.river == []:
                 self.river = ["R:"]
 
+
+    def find_parent(self):
+        parent_node = Identifier(self)
+        if parent_node.river:
+            parent_node.river = parent_node.river[:-1]
+        elif parent_node.turn:
+            parent_node.turn = parent_node.turn[:-1]
+        elif parent_node.flop:
+            parent_node.flop = parent_node.flop[:-1]
+        else:
+            parent_node.preflop = parent_node.preflop[:-1]
+
+
+        parent_node.create_name()
+        if parent_node.name[-2:] in ["R:", "T:", "F:"]:
+            parent_node.name = parent_node.name[:-2]
+        return parent_node.name
+
+
     def __str__(self):
         return str(self.name)
 

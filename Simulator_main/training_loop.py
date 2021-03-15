@@ -109,7 +109,7 @@ if __name__ == "__main__":
     # multiprocessing.freeze_support()
 
     total = time.time()
-    sim(rounds=100, new_tree=True, cores=6)
+    sim(rounds=300000, new_tree=False, cores=6)
     print("total time taken: " + str(time.time()-total))
     
 
