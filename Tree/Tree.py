@@ -151,7 +151,7 @@ class Tree:
         idx = 0
         self.root.children = None
 
-        dump_list = [self.root]
+        dump_list = []
         n_k = list(self.nodes.keys())
         random.shuffle(n_k)
 
