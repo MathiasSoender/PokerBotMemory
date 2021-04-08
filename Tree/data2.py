@@ -42,7 +42,7 @@ class Data:
 
     def find_split(self, probability):
         if self.fold_node:
-            splits = [0]
+            return 0
         else:
             splits = list(range(0, self.total_splits-1))
 
@@ -58,7 +58,7 @@ class Data:
             threshold = 1
             splits = [0]
         else:
-            threshold = 250
+            threshold = 200
             splits = list(range(0, self.total_splits))
 
 

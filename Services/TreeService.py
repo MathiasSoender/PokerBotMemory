@@ -79,7 +79,7 @@ def tree_service(tree_Q, channels, new_tree, path, is_bot=False):
             elif res.request == "stop":
                 break
 
-            if ((T.rounds_trained + 1) % 150000 == 0) and is_bot is False:
+            if ((T.rounds_trained + 1) % 200000 == 0) and is_bot is False:
                 print("intermediate save of model")
                 rt = "model" + str(T.rounds_trained)
                 T.to_object(rt)

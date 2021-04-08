@@ -1,21 +1,8 @@
-from Tree.data2 import Data
-import random
+import pickle
+some = pickle.load(open(r"C:\Users\Mathi\Desktop\cards7_memory\Simulator_main\model\nodes\nodes7706", "rb"))
 
-def find_denom2(n,c):
-    return (c**n - 1) / (c-1)
-D = Data()
+node = some[1]
 
-
-nums = list(reversed(list(range(0,10))))
-
-nums = [-2] * 100000
-
-for n in nums:
-    D.update(1, n)
-
-
-print(D)
-print(sum(nums)/len(nums))
-print(D.c_reward[5] / find_denom2(len(nums), 0.985))
+print(node.data.find_split(0.5))
 
 
