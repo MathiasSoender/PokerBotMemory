@@ -53,6 +53,6 @@ class loggerNonStatic:
         for node, dis in nodes:
             t = tuple_int_to_string(node.identifier.find_current_street()[-1])
 
-            self.log(str(t) + ": " + str(round(dis, 3)) + ", ", sep=" ")
+            self.log(str(t) + ": " + str(round(dis, 3)) + " " + " mb: " + str(node.maximumBet) + ", ", sep=" ")
         self.log("")
 

@@ -2,17 +2,18 @@ import math
 import random
 
 
+
 class Data:
     __slots__ = 'N', 'split_probabilities', 'all_probabilities', 'c_reward', 'fold_node', 'total_splits'
 
-    def __init__(self, pre_flop=False, fold_node=False, total_splits = 5):
+    def __init__(self, fold_node=False):
         self.N = []
         self.split_probabilities = []
         self.all_probabilities = []
         self.c_reward = []
 
         self.fold_node = False
-        self.total_splits = total_splits
+        self.total_splits = 2
 
         if fold_node:
             splits = [0]
@@ -54,12 +55,9 @@ class Data:
         return assigned_split
 
     def update_split(self, probability):
-        if self.fold_node:
-            threshold = 1
-            splits = [0]
-        else:
-            threshold = 200
-            splits = list(range(0, self.total_splits))
+
+        threshold = 40 * self.total_splits
+        splits = list(range(0, self.total_splits))
 
 
         if len(self.all_probabilities) > threshold:
@@ -87,6 +85,7 @@ class Data:
 
         if not self.fold_node:
             self.update_split(chosen_probability)
+            self.update_total_splits()
 
     def update_reward(self, chosen_split, reward):
 
@@ -94,3 +93,19 @@ class Data:
             self.c_reward[chosen_split] = reward
         else:
             self.c_reward[chosen_split] = self.c_reward[chosen_split] * 0.998 + reward
+
+    def update_total_splits(self):
+        from Tree.node import find_denom
+
+        max_splits = 7
+        if self.total_splits >= max_splits or self.fold_node:
+            return
+
+        if self.total_splits * 50 < sum(self.N):
+            self.total_splits += 1
+            self.N.append(1)
+            self.c_reward.append(self.c_reward[self.total_splits-2] / find_denom(self.N[self.total_splits-2]))
+            self.split_probabilities.append(0)
+
+
+

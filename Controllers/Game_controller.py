@@ -54,20 +54,31 @@ class game_controller:
         elif new_node.identifier.is_action("ca"):
             player.chips = players.find_max_bet_player().chips
 
-        # bet1 = 40%, 2.5BB
+        # bet1 = 40%, 2.5BB, if "b2" is available, otherwise 50% / 3BB
         elif new_node.identifier.is_action("b1"):
             current_bet = players.find_max_bet_player().bet
 
-            # This is an open. Last statement may not be needed.
-            if self.preflop and not players.has_opened() and current_bet == 1:
-                player.chips = 97.5
-                player.bet = 2.5
-            else:
-                # Pot already holds the bets
-                new_bet = (players.pot_size() + current_bet) * 0.4 + current_bet
+            if current_node.maximumBet == "b1":
+                # This is an open. Last statement may not be needed.
+                if self.preflop and not players.has_opened() and current_bet == 1:
+                    player.chips = 97
+                    player.bet = 3
+                else:
+                    # Pot already holds the bets
+                    new_bet = (players.pot_size() + current_bet) * 0.5 + current_bet
+                    player.chips = max(player.chips - (new_bet - player.bet), 0)
+                    player.bet = new_bet
 
-                player.chips = max(player.chips - (new_bet - player.bet), 0)
-                player.bet = new_bet
+            elif current_node.maximumBet == "b2":
+                if self.preflop and not players.has_opened() and current_bet == 1:
+                    player.chips = 97.5
+                    player.bet = 2.5
+                else:
+                    # Pot already holds the bets
+                    new_bet = (players.pot_size() + current_bet) * 0.4 + current_bet
+
+                    player.chips = max(player.chips - (new_bet - player.bet), 0)
+                    player.bet = new_bet
 
             players.set_done_actions(False)
 

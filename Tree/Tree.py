@@ -1,5 +1,5 @@
 import random
-
+import copy
 from Tree.node import Node
 from Tree.Identifier import Identifier
 from Tree.data2 import Data
@@ -26,7 +26,10 @@ class Tree:
             if root is None:
                 ID = Identifier()
                 ID.create_name(is_root=True)
-                self.add_node(ID, data=Data(), is_root=True)
+                # Make 1000, so that bet2 is always created.
+                D = Data()
+                D.N[0] = 1000
+                self.add_node(ID, data=D, is_root=True)
 
 
     def add_node(self, ID, data=None, is_root=False, parent=None):
@@ -37,9 +40,9 @@ class Tree:
             self.nodes[ID.name] = new_node
 
         else:
-                new_node = Node(ID, data, parent)
-                self.nodes[ID.name] = new_node
-                self.nodes[parent.identifier.name].add_child(new_node)
+            new_node = Node(ID, data)
+            self.nodes[ID.name] = new_node
+            self.nodes[parent.identifier.name].add_child(new_node)
 
 
     def print(self):
@@ -50,12 +53,12 @@ class Tree:
     """ Expand tree with new nodes if possible """
     def expand_tree(self, current_player, all_players, current_node, controller):
 
+
         if current_node.is_leaf() and current_player.chips > 0:
 
             all_players.update_remaining()
             pot = all_players.pot_size()
-            bet1 = True
-            bet2 = True
+            bet = True
             call = False
             check = False
             allIn = True
@@ -68,11 +71,8 @@ class Tree:
             # Raise: a + (% * b)
             # So basically, calculate pot after figuring out biggest raise.
             # Multiply pot with %, and add biggest raise.
-            if ((pot + current_bet) * 0.4 + current_bet) - current_player.bet > current_player.chips:
-                bet1 = False
-            if ((pot + current_bet) * 0.8 + current_bet) - current_player.bet > current_player.chips:
-                bet2 = False
-
+            if ((pot + current_bet) * 0.5 + current_bet) - current_player.bet > current_player.chips:
+                bet = False
 
             # Calls must also be available preflop, since blinds have been posted...
             if current_node.identifier.call_available(controller.new_street, controller.preflop,
@@ -93,7 +93,10 @@ class Tree:
                 allIn = False
 
             actions = [(fold, "f"), (call, "ca"), (check, "ch"),
-                       (bet1, "b1"), (bet2, "b2"), (allIn, "AL")]
+                       (bet, "b1"), (allIn, "AL")]
+
+            if bet:
+                current_node.maximumBet = "b1"
 
             for action, string in actions:
                 if action:
@@ -105,9 +108,33 @@ class Tree:
                     iden.update_street_list((current_player.name, string))
                     iden.create_name()
                     if string == "f":
-                        self.add_node(iden, data=Data(pre_flop=controller.preflop, fold_node=True), parent=current_node)
+                        self.add_node(iden, data=Data(fold_node=True), parent=current_node)
                     else:
-                        self.add_node(iden, data=Data(pre_flop=controller.preflop), parent=current_node)
+                        self.add_node(iden, data=Data(), parent=current_node)
+
+
+        if current_player.chips > 0 and sum(current_node.data.N) > 250 and current_node.maximumBet == "b1":
+
+            all_players.update_remaining()
+            pot = all_players.pot_size()
+            current_bet = all_players.find_max_bet_player().bet
+            bet2 = True
+            if ((pot + current_bet) * 0.8 + current_bet) - current_player.bet > current_player.chips:
+                bet2 = False
+
+            if bet2:
+                b1Child = None
+                for c in current_node.children:
+                    if c.identifier.is_action("b1"):
+                        b1Child = c
+
+                current_node.maximumBet = "b2"
+                iden = Identifier(current_node.identifier)
+                iden.update_new_street(controller.new_street)
+                iden.update_street_list((current_player.name, "b2"))
+                iden.create_name()
+                self.add_node(iden, data=copy.deepcopy(b1Child.data), parent=current_node)
+
 
         controller.new_street = [False, ""]
 

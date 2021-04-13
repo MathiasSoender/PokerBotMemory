@@ -6,13 +6,14 @@ import copy
 
 
 class Node:
+    __slots__ = 'children', 'identifier', 'data', 'maximumBet'
 
-    __slots__ = 'children', 'identifier', 'data'
-
-    def __init__(self, identifier: Identifier, data: Data, parent=None):
+    def __init__(self, identifier: Identifier, data: Data, maximumBet = None):
         self.children = []
         self.identifier = identifier
         self.data = data
+        # = None, if no bets available, = "b1" if b1 available, = "b2" if b1 & b2 available.
+        self.maximumBet = maximumBet
 
     """ Finds a rooted subtree of node """
 
@@ -24,7 +25,6 @@ class Node:
         T = Tree(new_tree=True, root=new_root)
         child_list = [new_root]
 
-
         while len(child_list) > 0:
             node = child_list.pop()
             for c in node.children:
@@ -34,9 +34,6 @@ class Node:
         return T
 
     def find_distribution(self, win_probability, thresh=150):
-
-        def find_denom(n, c=0.998):
-            return (c ** n - 1) / (c - 1)
 
         softmax_sum = 0
         softmax_distribution = []
@@ -77,7 +74,8 @@ class Node:
                 else:
 
                     softmax_distribution.append((child, math.exp((child.data.c_reward[child_split] /
-                                                 find_denom(child.data.N[child_split])) * beta) / softmax_sum))
+                                                                  find_denom(child.data.N[
+                                                                                 child_split])) * beta) / softmax_sum))
 
         return softmax_distribution
 
@@ -124,4 +122,8 @@ class Node:
         return new_node
 
     def __str__(self):
-        return str((self.identifier.name, self.data.__str__()))
+        return str((self.identifier.name, self.data.__str__(), self.maximumBet))
+
+
+def find_denom(n, c=0.998):
+    return (c ** n - 1) / (c - 1)
