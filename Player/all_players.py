@@ -3,6 +3,9 @@
 from Cython_pack.hand_rankings import rank_hand
 from Cython_pack.highcards import HighCard
 from Player.player_types import CO, BTN, MP, SB, BB, UTG
+from Poker.ranking.hand_ranking import  find_rank_jit
+from Poker.ranking.high_cards import toJitInputFindRank, HighCard_jit
+
 
 class Players:
     def __init__(self, utg: UTG.UTG, bb: BB.BB, sb: SB.SB, mp: MP.MP, btn: BTN.BTN, co: CO.CO):
@@ -137,27 +140,27 @@ class Players:
         winning_players = []
         # Find rank of players hands
         for player in self.players:
-            ranker = rank_hand(player.hand, community)
-            if max_rank == -1:
-                ranker.find_rank_initial()
-            else:
-                ranker.find_rank_second(max_rank)
+            com, suits = toJitInputFindRank(player.hand, community)
+            rank = find_rank_jit(com, suits)
 
-            if ranker.rank > max_rank:
+            if rank > max_rank:
                 winning_players = [player]
 
-            elif ranker.rank == max_rank:
+            elif rank == max_rank:
                 winning_players.append(player)
 
-            max_rank = max(ranker.rank, max_rank)
+            max_rank = max(rank, max_rank)
 
         # More players with same rank, find high cards combinations:
         if len(winning_players) > 1:
             highest_card_winning_players = [winning_players[0]]
-            max_cards = HighCard(max_rank, winning_players[0].hand, community)
+
+            com, suits = toJitInputFindRank(winning_players[0].hand, community)
+            max_cards = list(HighCard_jit(max_rank, com, suits))
             for player in winning_players[1:]:
 
-                high_cards = HighCard(max_rank, player.hand, community)
+                com, suits = toJitInputFindRank(player.hand, community)
+                high_cards = list(HighCard_jit(max_rank, com, suits))
                 # Same hand strength:
                 if high_cards == max_cards:
                     highest_card_winning_players.append(player)

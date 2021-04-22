@@ -1,7 +1,11 @@
 import copy
+from numba import jit, njit
+import numpy as np
+
 
 class rank_hand:
     def __init__(self, Hand, Community):
+
         self.rank = 1
         self.Hand = Hand
         self.Community = Community
@@ -106,5 +110,67 @@ class rank_hand:
             if self.rank > vil_rank:
                 return
 
+
+
+@njit
+def find_rank_jit(HandAndCom, Suits):
+
+    unique = np.unique(HandAndCom)
+    counts = 0
+    for ele in unique:
+        counts = max(np.count_nonzero(HandAndCom == ele), counts)
+
+    if counts == 4:
+        return 8
+
+
+    two_same = False
+    three_same = False
+    for i in range(len(unique)):
+        if np.count_nonzero(HandAndCom == unique[i]) == 3:
+            if three_same:
+                return 7
+            three_same = True
+
+        elif np.count_nonzero(HandAndCom == unique[i]) == 2:
+            two_same = True
+
+        if two_same and three_same:
+            return 7
+
+
+    for ele in Suits:
+        if np.count_nonzero(Suits == ele) >= 5:
+            return 6
+
+    straightSum = 1
+    if unique[0] == 2 and unique[-1] == 14:
+        straightSum = 2
+
+    for i in range(0, len(unique) - 1):
+        if unique[i] + 1 == unique[i + 1]:
+            straightSum += 1
+        else:
+            straightSum = 1
+        if straightSum >= 5:
+            return 5
+
+    if counts == 3:
+        return 4
+
+
+    TwoPairs = 0
+    for i in range(len(unique)):
+        if np.count_nonzero(HandAndCom == unique[i]) == 2:
+            TwoPairs += 1
+
+        if TwoPairs >= 2:
+            return 3
+
+
+    if counts == 2:
+        return 2
+
+    return 1
 
 

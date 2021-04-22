@@ -1,5 +1,8 @@
 import numpy as np
 import heapq
+from numba import jit, njit
+
+
 
 
 # Figure out a way to determine the 5 greatest cards.
@@ -121,3 +124,118 @@ def HighCard(Rank, Hand, Community):
 
     return list(High)
 
+
+
+
+def toJitInputFindRank(hand, com):
+    handandcom = np.array([0] * (len(com) + 2))
+    suits = np.array([""] * (len(com) + 2))
+
+    for i, c in enumerate(com):
+        handandcom[i] = c.value
+        suits[i] = c.suit
+
+
+    handandcom[-2] = hand[0].value
+    handandcom[-1] = hand[1].value
+    suits[-2] = hand[0].suit
+    suits[-1] = hand[1].suit
+
+    cc = np.array([ord(x) for x in suits])
+
+    return handandcom, cc
+
+@jit(nopython=True)
+def HighCard_jit(Rank, HandAndCom, Suits):
+    High = np.zeros(5)
+
+    HandAndComSorted = np.sort(HandAndCom)[::-1]
+
+    if Rank == 1:
+       High[0:5] = HandAndComSorted[:5]
+
+    elif Rank == 2:
+        for i in range(0, len(HandAndComSorted)-1):
+            if HandAndComSorted[i] == HandAndComSorted[i+1]:
+                High[0:2] = np.array([HandAndComSorted[i]] * 2)
+        HandAndComSorted = HandAndComSorted[np.where(HandAndComSorted != High[0])]
+
+        High[2:] = HandAndComSorted[:3]
+
+    elif Rank == 3:
+
+        for i in range(0, len(HandAndComSorted)-1):
+            if HandAndComSorted[i] == HandAndComSorted[i+1]:
+                if High[0] == 0:
+                    High[0:2] = np.array([HandAndComSorted[i]] * 2)
+                else:
+                    High[2:4] = np.array([HandAndComSorted[i]] * 2)
+
+        HandAndComSorted = HandAndComSorted[np.where(HandAndComSorted != High[0])]
+        HandAndComSorted = HandAndComSorted[np.where(HandAndComSorted != High[3])]
+
+        High[4] = max(HandAndComSorted)
+
+
+    elif Rank == 4:
+        for i in range(0, len(HandAndComSorted)-2):
+            if HandAndComSorted[i] == HandAndComSorted[i+1] == HandAndComSorted[i+2]:
+                High[0:3] = np.array([HandAndComSorted[i]] * 3)
+                HandAndComSorted = HandAndComSorted[np.where(HandAndComSorted != High[0])]
+                break
+
+        High[3:] = HandAndComSorted[:2]
+
+
+    elif Rank == 5:
+        HandAndComSorted = np.unique(HandAndComSorted)[::-1]
+        j = 1
+        High[0] = HandAndComSorted[0]
+
+        for i in range(0, len(HandAndComSorted) - 1):
+            if HandAndComSorted[i] - 1 == HandAndComSorted[i + 1]:
+                High[j] = HandAndComSorted[i + 1]
+                j += 1
+            else:
+                High = np.zeros(5)
+                High[0] = HandAndComSorted[i + 1]
+                j = 1
+            if High[4] != 0:
+                break
+
+    elif Rank == 6:
+        maxsuit = np.argmax(np.bincount(Suits))
+        suitset = np.zeros(7)
+
+        for i in range(0, len(Suits)):
+            if Suits[i] == maxsuit:
+                suitset[i] = HandAndCom[i]
+
+
+        suitset = np.sort(suitset)[::-1]
+
+        High = suitset[0:5]
+
+    elif Rank == 7:
+
+        for i in range(0, len(HandAndComSorted)-2):
+            if HandAndComSorted[i] == HandAndComSorted[i+1] == HandAndComSorted[i+2]:
+                High[0:3] = np.array([HandAndComSorted[i]] * 3)
+                HandAndComSorted = HandAndComSorted[np.where(HandAndComSorted != High[0])]
+                break
+
+        for i in range(0, len(HandAndComSorted) - 1):
+            if HandAndComSorted[i] == HandAndComSorted[i + 1]:
+                High[3:5] = np.array([HandAndComSorted[i]] * 2)
+                break
+
+    elif Rank == 8:
+        for i in range(0, len(HandAndComSorted) - 3):
+            if HandAndComSorted[i] == HandAndComSorted[i + 1] == HandAndComSorted[i + 2] == HandAndComSorted[i + 3]:
+                High[0:4] = np.array([HandAndComSorted[i]] * 4)
+                break
+
+        HandAndComSorted = HandAndComSorted[np.where(HandAndComSorted != High[0])]
+        High[4] = max(HandAndComSorted)
+
+    return High
